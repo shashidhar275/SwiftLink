@@ -2,10 +2,15 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const PORT = 8001;
-const URL = require('./models/url');
+const cookieParser = require('cookie-parser');
+const { restrictToLoggedinUserOnly , checkAuth } = require('./middlewares/auth');
+const { connectToMongoDb } = require('./connection');
+
+
 const staticRoute = require('./routes/staticRouter');
 const urlRoute = require('./routes/url');
-const { connectToMongoDb } = require('./connection');
+const userRoute = require('./routes/user');
+
 
 connectToMongoDb('mongodb://localhost:27017/short-url')
 .then(()=> console.log('MongoDb connected'));
@@ -15,15 +20,10 @@ app.set('views',path.resolve('./views'));//Providing the info about the ejs file
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+app.use(cookieParser());
 
-app.get('/test',async (req,res)=>{
-    const allDbUrls = await URL.find({});
-    res.render('home',{
-        urls: allDbUrls
-    });
-});
-
-app.use('/url', urlRoute);
-app.use('/',staticRoute);
+app.use('/url', restrictToLoggedinUserOnly, urlRoute);
+app.use('/user',userRoute);
+app.use('/', checkAuth, staticRoute);
 
 app.listen(PORT,()=>{console.log(`Server running on PORT ${PORT}`)});
