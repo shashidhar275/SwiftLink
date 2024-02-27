@@ -20,8 +20,8 @@ const handleUserLogin = async (req,res)=>{
         });
     }
     const token = setUser(user);
-    //res.cookie('uid',token);
-    return res.json({ token });
+    res.cookie('token',token);
+    return res.redirect('/');
 }
 
 module.exports = { handleUserSignup ,handleUserLogin}
